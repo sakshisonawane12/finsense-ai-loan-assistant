@@ -1,3 +1,4 @@
 sanction_letter.pdf
 __pycache__/
 venv/
+.env

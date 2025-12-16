@@ -1,15 +1,15 @@
-def check_eligibility():
-    # Dummy underwriting logic
-    credit_score = 750
-    salary = 50000
+def check_eligibility(salary: int = 0):
+    # Simple, explainable underwriting rules
+    MIN_SALARY = 30000
+    CREDIT_SCORE = 750  # mock score
 
-    if credit_score >= 700 and salary >= 30000:
+    if salary >= MIN_SALARY and CREDIT_SCORE >= 700:
         return {
             "approved": True,
-            "message": "Congratulations 🎉 You are eligible for the loan."
+            "message": "Congratulations 🎉 Based on your income and credit profile, you are eligible for the loan."
         }
     else:
         return {
             "approved": False,
-            "message": "Sorry 😔 You are not eligible for the loan."
+            "message": "Sorry 😔 Based on the provided salary details, you are currently not eligible for this loan."
         }
