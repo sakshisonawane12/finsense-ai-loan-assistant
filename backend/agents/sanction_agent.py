@@ -9,7 +9,7 @@ def generate_sanction_letter(name="Customer", amount="5,00,000"):
     width, height = A4
 
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, height - 50, "Tata Capital")
+    c.drawString(50, height - 50, "FinSense AI Loan Sanction Letter")
 
     c.setFont("Helvetica", 12)
     c.drawString(50, height - 100, f"Date: {date.today()}")
@@ -30,7 +30,7 @@ def generate_sanction_letter(name="Customer", amount="5,00,000"):
     )
 
     c.drawString(50, height - 300, "Regards,")
-    c.drawString(50, height - 320, "Tata Capital Loan Team")
+    c.drawString(50, height - 320, "FinSense AI Loan Team")
 
     c.save()
 

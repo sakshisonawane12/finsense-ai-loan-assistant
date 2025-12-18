@@ -24,27 +24,43 @@ export default function Home() {
   async function sendMessage() {
     if (!message.trim()) return;
 
-    setMessages((prev) => [...prev, "You: " + message]);
+    const userMessage = message; // store before clearing
+
+    setMessages((prev) => [...prev, "You: " + userMessage]);
+    setMessage(""); // ✅ clear immediately
     setTyping(true);
 
-    const res = await fetch("http://127.0.0.1:8000/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ message }),
-    });
+    try {
+      const res = await fetch("http://127.0.0.1:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: userMessage }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    setTyping(false);
-    setMessages((prev) => [...prev, "Bot: " + data.reply]);
+      if (data && data.reply) {
+        setMessages((prev) => [...prev, "Bot: " + data.reply]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          "Bot: Sorry, I didn’t understand that. Please try again.",
+        ]);
+      }
 
-    if (data.sanction_letter) {
-      setMessages((prev) => [...prev, "DOWNLOAD_SANCTION"]);
+      if (data.sanction_letter) {
+        setMessages((prev) => [...prev, "DOWNLOAD_SANCTION"]);
+      }
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        "Bot: Sorry, something went wrong. Please try again.",
+      ]);
+    } finally {
+      setTyping(false);
     }
-
-    setMessage("");
   }
 
   return (

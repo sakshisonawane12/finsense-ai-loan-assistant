@@ -9,3 +9,9 @@ def is_valid_salary(text: str) -> bool:
     if not digits:
         return False
     return int(digits) >= 10000
+def is_valid_tenure(text: str) -> bool:
+    digits = "".join(c for c in text if c.isdigit())
+    if not digits:
+        return False
+    years = int(digits)
+    return 1 <= years <= 30

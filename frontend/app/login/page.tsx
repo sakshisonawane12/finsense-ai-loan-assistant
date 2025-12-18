@@ -56,9 +56,12 @@ export default function Login() {
         />
 
         <input
-          placeholder=" Phone Number"
+          type="password"
+          placeholder="Password"
           value={phone}
-          autoComplete="tel"
+          autoComplete="new-password"
+          inputMode="numeric"
+          maxLength={10}
           onChange={(e) => setPhone(e.target.value)}
           style={{
             width: "100%",
