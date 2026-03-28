@@ -71,7 +71,7 @@ export default function ChatPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-  message,
+  message: msg,
   user_id: user
 }),
       });
@@ -94,12 +94,12 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f0f4ff] to-[#e8f0fe] flex flex-col">
+    <div className="min-h-screen bg-linear-to-br from-[#f0f4ff] to-[#e8f0fe] flex flex-col">
 
       {/* ── Top bar ── */}
       <header className="bg-white border-b border-gray-100 shadow-sm px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold text-sm shadow-md">F</div>
+          <div className="w-9 h-9 rounded-xl bg-linear-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold text-sm shadow-md">F</div>
           <div>
             <p className="font-bold text-gray-900 text-sm">FinSense AI</p>
             <p className="text-xs text-green-500 flex items-center gap-1">
@@ -121,7 +121,7 @@ export default function ChatPage() {
         {messages.map(m => (
           <div key={m.id} className={`flex gap-3 ${m.from === "user" ? "flex-row-reverse" : "flex-row"} animate-fade-in-up`}>
             {/* Avatar */}
-            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold shadow-sm ${m.from === "bot" ? "bg-gradient-to-br from-blue-600 to-indigo-700 text-white" : "bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600"}`}>
+            <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm font-bold shadow-sm ${m.from === "bot" ? "bg-linear-to-br from-blue-600 to-indigo-700 text-white" : "bg-linear-to-br from-gray-200 to-gray-300 text-gray-600"}`}>
               {m.from === "bot" ? "🤖" : user[0]?.toUpperCase() ?? "U"}
             </div>
 
@@ -131,7 +131,7 @@ export default function ChatPage() {
                 href="http://127.0.0.1:8000/download"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl rounded-tl-sm shadow-md hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm"
+                className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-blue-600 to-indigo-700 text-white rounded-2xl rounded-tl-sm shadow-md hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm"
               >
                 📄 Download Sanction Letter
               </a>
@@ -139,7 +139,7 @@ export default function ChatPage() {
               <div className={`max-w-[75%] group`}>
                 <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
                   m.from === "user"
-                    ? "bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-tr-sm"
+                    ? "bg-linear-to-br from-blue-600 to-indigo-700 text-white rounded-tr-sm"
                     : "bg-white text-gray-800 rounded-tl-sm border border-gray-100"
                 }`}>
                   {m.text}
@@ -153,7 +153,7 @@ export default function ChatPage() {
         {/* Typing indicator */}
         {typing && (
           <div className="flex gap-3 animate-fade-in-up">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-sm">🤖</div>
+            <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-sm">🤖</div>
             <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
               <div className="dot-flashing flex items-center gap-1 h-4">
                 <span /><span /><span />
@@ -191,7 +191,7 @@ export default function ChatPage() {
           <button
             onClick={() => send()}
             disabled={!input.trim() || typing}
-            className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-xl flex items-center justify-center hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-blue-200 flex-shrink-0"
+            className="w-11 h-11 bg-linear-to-br from-blue-600 to-indigo-700 text-white rounded-xl flex items-center justify-center hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-blue-200 shrink-0"
           >
             <svg className="w-5 h-5 rotate-90" fill="currentColor" viewBox="0 0 24 24">
               <path d="M2 21l21-9L2 3v7l15 2-15 2z" />

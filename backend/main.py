@@ -54,18 +54,18 @@ def is_valid_tenure(text: str) -> bool:
 def chat(req: ChatRequest):
     user_msg = req.message.lower().strip()
     state = get_user_state(req.user_id)
-stage = state["stage"]
+    stage = state["stage"]
 
     # 🔁 restart
     if stage == "completed" and "loan" in user_msg:
-        conversation_state["stage"] = "start"
+        state["stage"] = "start"
         stage = "start"
 
     # ================= START =================
     if stage == "start":
 
         if any(w in user_msg for w in ["no", "dont", "don't", "donnt", "cancel"]):
-            conversation_state["stage"] = "completed"
+            state["stage"] = "completed"
             return {
                 "reply": rewrite_with_llm(
                     "No worries 😊 I’m here whenever you need help with a personal loan.\n"
@@ -134,8 +134,10 @@ stage = state["stage"]
             }
 
         kyc = verify_kyc()
-        result = check_eligibility(salary=50000)
+        salary_digits = int("".join(c for c in user_msg if c.isdigit()))
+        state["salary"] = salary_digits
 
+        result = check_eligibility(salary_digits)
         state["stage"] = "approved" if result["approved"] else "rejected"
 
         return {
