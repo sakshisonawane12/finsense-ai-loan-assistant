@@ -94,32 +94,51 @@ def chat(req: ChatRequest):
         if not is_valid_amount(user_msg):
             return {
                 "reply": rewrite_with_llm(
-                    "That doesn’t look like a valid loan amount.\n"
-                    "Please enter something like 5 lakh or 500000."
+                    "Please enter a valid loan amount like 5 lakh or 500000."
                 )
             }
 
+        # Extract amount digits
+        amount = int("".join(c for c in user_msg if c.isdigit()))
+
+        state["amount"] = amount
         state["stage"] = "tenure"
+
         return {
             "reply": rewrite_with_llm(
-                "For how many years would you like to take this loan?"
+                f"Got it 👍 You are looking for ₹{amount}. "
+                "For how many years would you like the loan?"
             )
         }
 
     # ================= TENURE =================
     elif stage == "tenure":
 
-        if not is_valid_tenure(user_msg):
+        digits = "".join(c for c in user_msg if c.isdigit())
+
+        if not digits:
             return {
                 "reply": rewrite_with_llm(
-                    "Please enter a valid loan duration in years (e.g. 5 or 10)."
+                    "Please enter tenure in years (e.g. 5 or 10)."
                 )
             }
 
+        tenure = int(digits)
+
+        if tenure < 1 or tenure > 30:
+            return {
+                "reply": rewrite_with_llm(
+                    "Loan tenure should be between 1 and 30 years."
+                )
+            }
+
+        state["tenure"] = tenure
         state["stage"] = "salary"
+
         return {
             "reply": rewrite_with_llm(
-                "Thanks 😊 What is your monthly salary?"
+                f"Great 👍 {tenure} years selected. "
+                "What is your monthly salary?"
             )
         }
 
