@@ -17,9 +17,17 @@ load_dotenv()
 
 app = FastAPI()
 
-conversation_state = {
-    "stage": "start"
-}
+conversation_state = {}
+
+def get_user_state(user_id):
+    if user_id not in conversation_state:
+        conversation_state[user_id] = {
+            "stage": "start",
+            "amount": None,
+            "tenure": None,
+            "salary": None
+        }
+    return conversation_state[user_id]
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,6 +39,7 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     message: str
+    user_id: str
 
 
 def is_valid_tenure(text: str) -> bool:
@@ -44,7 +53,8 @@ def is_valid_tenure(text: str) -> bool:
 @app.post("/chat")
 def chat(req: ChatRequest):
     user_msg = req.message.lower().strip()
-    stage = conversation_state["stage"]
+    state = get_user_state(req.user_id)
+stage = state["stage"]
 
     # 🔁 restart
     if stage == "completed" and "loan" in user_msg:
@@ -64,7 +74,7 @@ def chat(req: ChatRequest):
             }
 
         if "loan" in user_msg:
-            conversation_state["stage"] = "amount"
+            state["stage"] = "amount"
             return {
                 "reply": rewrite_with_llm(
                     "Great 👍 How much loan amount are you looking for?"
@@ -89,7 +99,7 @@ def chat(req: ChatRequest):
                 )
             }
 
-        conversation_state["stage"] = "tenure"
+        state["stage"] = "tenure"
         return {
             "reply": rewrite_with_llm(
                 "For how many years would you like to take this loan?"
@@ -106,7 +116,7 @@ def chat(req: ChatRequest):
                 )
             }
 
-        conversation_state["stage"] = "salary"
+        state["stage"] = "salary"
         return {
             "reply": rewrite_with_llm(
                 "Thanks 😊 What is your monthly salary?"
@@ -126,7 +136,7 @@ def chat(req: ChatRequest):
         kyc = verify_kyc()
         result = check_eligibility(salary=50000)
 
-        conversation_state["stage"] = "approved" if result["approved"] else "rejected"
+        state["stage"] = "approved" if result["approved"] else "rejected"
 
         return {
             "reply": rewrite_with_llm(
@@ -137,7 +147,7 @@ def chat(req: ChatRequest):
     # ================= APPROVED =================
     elif stage == "approved":
         generate_sanction_letter()
-        conversation_state["stage"] = "completed"
+        state["stage"] = "completed"
         return {
             "reply": rewrite_with_llm(
                 "🎉 Your loan is approved! I’ve generated your sanction letter."
@@ -147,7 +157,7 @@ def chat(req: ChatRequest):
 
     # ================= REJECTED =================
     elif stage == "rejected":
-        conversation_state["stage"] = "completed"
+        state["stage"] = "completed"
         return {
             "reply": rewrite_with_llm(
                 "Based on the provided details, you’re not eligible right now.\n"
