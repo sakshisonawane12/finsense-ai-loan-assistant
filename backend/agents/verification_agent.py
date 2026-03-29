@@ -1,45 +1,57 @@
-import random
-import time
+# agents/verification_agent.py
 
-# Confidence routing thresholds
+# ================= CONSTANTS =================
 AUTO_APPROVE_THRESHOLD = 92
 MANUAL_REVIEW_THRESHOLD = 75
 
 
+# ================= HELPER =================
+
+def get_kyc_confidence(aadhaar_suffix: str) -> int:
+    """
+    Deterministic confidence based on Aadhaar suffix
+    Ensures consistent results across calls
+    """
+    if not aadhaar_suffix:
+        return 70  # fallback low confidence
+
+    return 75 + (hash(aadhaar_suffix) % 25)  # 75–99 stable
+
+
+# ================= MAIN =================
+
 def verify_kyc(retry: bool = False, aadhaar_suffix: str = "") -> dict:
     """
-    Simulates KYC with realistic confidence distribution.
-    - First attempt: 70% chance high confidence, 20% medium, 10% fail
-    - Retry: always high confidence
-    Confidence routing:
-      >= 92  → auto approve
-      75-91  → proceed with flag
-      < 75   → escalate immediately
+    Deterministic KYC system
+
+    Routing:
+    ≥92 → Auto approve
+    75–91 → Flagged
+    <75 → Escalate
     """
+
+    confidence = get_kyc_confidence(aadhaar_suffix)
+
+    # Retry improves confidence
     if retry:
-        confidence = random.randint(92, 99)
-    else:
-        roll = random.random()
-        if roll < 0.70:
-            confidence = random.randint(88, 99)   # high
-        elif roll < 0.90:
-            confidence = random.randint(75, 87)   # medium
-        else:
-            confidence = random.randint(40, 74)   # fail
+        confidence = max(confidence, 92)
 
     kyc_verified = confidence >= MANUAL_REVIEW_THRESHOLD
 
+    # Routing logic
     if confidence >= AUTO_APPROVE_THRESHOLD:
         route = "AUTO_APPROVED"
         route_msg = "KYC auto-approved — high confidence ✅"
+
     elif confidence >= MANUAL_REVIEW_THRESHOLD:
         route = "FLAGGED"
         route_msg = "KYC passed with flag — medium confidence ⚠️"
+
     else:
         route = "ESCALATE"
         route_msg = "KYC confidence too low — escalating ❌"
 
-    # Explainability: which checks passed
+    # Explainability checks
     checks = {
         "identity_match": confidence >= 75,
         "document_valid": confidence >= 70,
@@ -60,9 +72,15 @@ def verify_kyc(retry: bool = False, aadhaar_suffix: str = "") -> dict:
     }
 
 
-def query_kyc_confidence(threshold: int = 90) -> dict:
-    """Agent-to-agent interface for UnderwritingAgent."""
-    result = verify_kyc()
+# ================= AGENT INTERFACE =================
+
+def query_kyc_confidence(threshold: int = 90, aadhaar_suffix: str = "") -> dict:
+    """
+    Agent-to-agent interface (kept for compatibility)
+    """
+
+    result = verify_kyc(aadhaar_suffix=aadhaar_suffix)
+
     return {
         "meets_threshold": result["confidence"] >= threshold,
         "confidence": result["confidence"],

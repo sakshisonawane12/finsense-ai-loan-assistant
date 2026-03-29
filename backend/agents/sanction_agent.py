@@ -1,97 +1,85 @@
-from reportlab.lib.pagesizes import A4
+# agents/sanction_agent.py
+
+from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from reportlab.lib import colors
-from datetime import date
+from datetime import datetime
 
 
 def generate_sanction_letter(
-    name: str = "Customer",
-    amount: str = "5,00,000",
-    tenure_years: int = 5,
-    emi: int = 0,
-    total_payable: int = 0,
-    annual_rate: float = 10.5,
-    ref_id: str = "",
-) -> str:
-    filename = "sanction_letter.pdf"
-    c = canvas.Canvas(filename, pagesize=A4)
-    w, h = A4
+    name: str,
+    amount: str,
+    tenure_years: int,
+    emi: int,
+    total_payable: int,
+    annual_rate: float,
+    ref_id: str,
+    risk_profile: str = "N/A",
+    credit_score: int = 0,
+    confidence: int = 0,
+):
+    """
+    Generates professional sanction letter PDF with explainability
+    """
 
-    # Header bar
-    c.setFillColorRGB(0.07, 0.22, 0.54)
-    c.rect(0, h - 80, w, 80, fill=1, stroke=0)
-    c.setFillColorRGB(1, 1, 1)
-    c.setFont("Helvetica-Bold", 20)
-    c.drawString(40, h - 45, "FinSense AI")
-    c.setFont("Helvetica", 11)
-    c.drawString(40, h - 65, "Personal Loan Sanction Letter")
+    file_path = "sanction_letter.pdf"
 
-    # Ref + Date
-    c.setFillColorRGB(0.3, 0.3, 0.3)
+    c = canvas.Canvas(file_path, pagesize=letter)
+    width, height = letter
+
+    # ================= HEADER =================
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(50, height - 50, "FinSense AI Loan Sanction Letter")
+
     c.setFont("Helvetica", 10)
-    c.drawString(40, h - 110, f"Date: {date.today().strftime('%d %B %Y')}")
-    if ref_id:
-        c.drawString(40, h - 125, f"Reference ID: {ref_id}")
+    c.drawString(50, height - 70, f"Reference ID: {ref_id}")
+    c.drawString(400, height - 70, f"Date: {datetime.now().strftime('%d %b %Y')}")
 
-    # Greeting
-    c.setFillColorRGB(0, 0, 0)
-    c.setFont("Helvetica", 12)
-    c.drawString(40, h - 160, f"Dear {name},")
-    c.setFont("Helvetica", 11)
-    c.drawString(40, h - 185,
-        "We are pleased to inform you that your personal loan application has been")
-    c.drawString(40, h - 200, "approved. Please find the sanction details below.")
-
-    # Loan details box
-    c.setFillColorRGB(0.95, 0.97, 1.0)
-    c.setStrokeColorRGB(0.07, 0.22, 0.54)
-    c.roundRect(40, h - 360, w - 80, 140, 8, fill=1, stroke=1)
-
-    c.setFillColorRGB(0.07, 0.22, 0.54)
+    # ================= CUSTOMER =================
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(55, h - 240, "Loan Sanction Details")
-
-    details = [
-        ("Loan Amount", f"Rs. {amount}"),
-        ("Loan Tenure", f"{tenure_years} Years ({tenure_years * 12} Months)"),
-        ("Annual Interest Rate", f"{annual_rate}% (Reducing Balance)"),
-        ("Monthly EMI", f"Rs. {emi:,}" if emi else "—"),
-        ("Total Payable", f"Rs. {total_payable:,}" if total_payable else "—"),
-    ]
+    c.drawString(50, height - 110, "Applicant Details")
 
     c.setFont("Helvetica", 11)
-    y = h - 265
-    for label, value in details:
-        c.setFillColorRGB(0.4, 0.4, 0.4)
-        c.drawString(55, y, label)
-        c.setFillColorRGB(0, 0, 0)
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(260, y, value)
-        c.setFont("Helvetica", 11)
-        y -= 18
+    c.drawString(50, height - 130, f"Name: {name}")
 
-    # Terms
-    c.setFillColorRGB(0.3, 0.3, 0.3)
+    # ================= LOAN DETAILS =================
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, height - 170, "Loan Details")
+
+    c.setFont("Helvetica", 11)
+    c.drawString(50, height - 190, f"Loan Amount: ₹{amount}")
+    c.drawString(50, height - 210, f"Tenure: {tenure_years} years")
+    c.drawString(50, height - 230, f"Interest Rate: {annual_rate}% p.a.")
+
+    # ================= EMI =================
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, height - 270, "Repayment Summary")
+
+    c.setFont("Helvetica", 11)
+    c.drawString(50, height - 290, f"Monthly EMI: ₹{emi}")
+    c.drawString(50, height - 310, f"Total Payable: ₹{total_payable}")
+
+    # ================= AI DECISION =================
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, height - 350, "AI Decision Insights")
+
+    c.setFont("Helvetica", 11)
+    c.drawString(50, height - 370, f"Risk Profile: {risk_profile}")
+    c.drawString(50, height - 390, f"Credit Score: {credit_score}")
+    c.drawString(50, height - 410, f"Confidence Score: {confidence}%")
+
+    # ================= TERMS =================
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, height - 450, "Terms & Conditions")
+
     c.setFont("Helvetica", 10)
-    c.drawString(40, h - 390, "Terms & Conditions:")
-    terms = [
-        "1. This sanction is valid for 30 days from the date of issue.",
-        "2. Disbursement is subject to submission of required documents.",
-        "3. EMI is calculated on reducing balance method.",
-        "4. Prepayment charges may apply as per bank policy.",
-    ]
-    y = h - 408
-    for t in terms:
-        c.drawString(40, y, t)
-        y -= 15
+    c.drawString(50, height - 470, "• Loan subject to final verification.")
+    c.drawString(50, height - 485, "• Timely EMI payments required.")
+    c.drawString(50, height - 500, "• FinSense reserves the right to revoke approval.")
 
-    # Footer
-    c.setFillColorRGB(0.07, 0.22, 0.54)
-    c.rect(0, 0, w, 50, fill=1, stroke=0)
-    c.setFillColorRGB(1, 1, 1)
-    c.setFont("Helvetica", 9)
-    c.drawString(40, 30, "FinSense AI Loan Team  |  This is a system-generated letter.")
-    c.drawString(40, 18, "EY Techathon 2025  |  Powered by Multi-Agent AI")
+    # ================= FOOTER =================
+    c.setFont("Helvetica-Oblique", 9)
+    c.drawString(50, 50, "This is an AI-generated sanction letter.")
 
     c.save()
-    return filename
+
+    return file_path
