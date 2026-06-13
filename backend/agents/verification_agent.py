@@ -1,57 +1,42 @@
-# agents/verification_agent.py
+"""
+verification_agent.py
+Deterministic KYC — same Aadhaar suffix always produces same confidence score.
+Fixes the double-call agent-to-agent bug: confidence is computed once and passed through.
+"""
 
-# ================= CONSTANTS =================
-AUTO_APPROVE_THRESHOLD = 92
+AUTO_APPROVE_THRESHOLD  = 92
 MANUAL_REVIEW_THRESHOLD = 75
 
 
-# ================= HELPER =================
-
-def get_kyc_confidence(aadhaar_suffix: str) -> int:
+def compute_kyc_confidence(aadhaar_suffix: str, retry: bool = False) -> int:
     """
-    Deterministic confidence based on Aadhaar suffix
-    Ensures consistent results across calls
+    Deterministic: same suffix → same score every time.
+    Uses hash so it's stable across calls — fixes the double-call bug.
+    Retry bumps score by 10 points (capped at 99).
     """
-    if not aadhaar_suffix:
-        return 70  # fallback low confidence
+    if not aadhaar_suffix or len(aadhaar_suffix) != 4:
+        return 60  # clearly low — will escalate
 
-    return 75 + (hash(aadhaar_suffix) % 25)  # 75–99 stable
+    base = 75 + (abs(hash(aadhaar_suffix)) % 25)   # 75–99
+    return min(99, base + (10 if retry else 0))
 
 
-# ================= MAIN =================
-
-def verify_kyc(retry: bool = False, aadhaar_suffix: str = "") -> dict:
+def verify_kyc(aadhaar_suffix: str = "", retry: bool = False) -> dict:
     """
-    Deterministic KYC system
-
-    Routing:
-    ≥92 → Auto approve
-    75–91 → Flagged
-    <75 → Escalate
+    Runs KYC verification once. Returns structured result with confidence,
+    route, per-check breakdown, and rule code.
+    Confidence is stored in state after this call — NOT re-computed later.
     """
-
-    confidence = get_kyc_confidence(aadhaar_suffix)
-
-    # Retry improves confidence
-    if retry:
-        confidence = max(confidence, 92)
-
+    confidence = compute_kyc_confidence(aadhaar_suffix, retry)
     kyc_verified = confidence >= MANUAL_REVIEW_THRESHOLD
 
-    # Routing logic
     if confidence >= AUTO_APPROVE_THRESHOLD:
-        route = "AUTO_APPROVED"
-        route_msg = "KYC auto-approved — high confidence ✅"
-
+        route, route_msg = "AUTO_APPROVED", "KYC auto-approved — high confidence ✅"
     elif confidence >= MANUAL_REVIEW_THRESHOLD:
-        route = "FLAGGED"
-        route_msg = "KYC passed with flag — medium confidence ⚠️"
-
+        route, route_msg = "FLAGGED", "KYC passed with flag — medium confidence ⚠️"
     else:
-        route = "ESCALATE"
-        route_msg = "KYC confidence too low — escalating ❌"
+        route, route_msg = "ESCALATE", "KYC confidence too low — escalating ❌"
 
-    # Explainability checks
     checks = {
         "identity_match": confidence >= 75,
         "document_valid": confidence >= 70,
@@ -60,30 +45,26 @@ def verify_kyc(retry: bool = False, aadhaar_suffix: str = "") -> dict:
     }
 
     return {
-        "kyc_verified": kyc_verified,
-        "confidence": confidence,
-        "route": route,
-        "route_msg": route_msg,
-        "checks": checks,
-        "aadhaar_verified": bool(aadhaar_suffix and len(aadhaar_suffix) == 4),
-        "message": route_msg,
-        "agent": "VerificationAgent",
-        "rule": "KYC_CONFIDENCE_RULE_001",
+        "kyc_verified":    kyc_verified,
+        "confidence":      confidence,
+        "route":           route,
+        "route_msg":       route_msg,
+        "checks":          checks,
+        "aadhaar_verified": len(aadhaar_suffix) == 4,
+        "message":         route_msg,
+        "agent":           "VerificationAgent",
+        "rule":            "KYC_CONFIDENCE_RULE_001",
     }
 
 
-# ================= AGENT INTERFACE =================
-
-def query_kyc_confidence(threshold: int = 90, aadhaar_suffix: str = "") -> dict:
+def query_kyc_confidence(kyc_confidence: int, threshold: int = 90) -> dict:
     """
-    Agent-to-agent interface (kept for compatibility)
+    Agent-to-agent interface.
+    FIXED: accepts the already-computed confidence from state — no second KYC call.
+    UnderwritingAgent calls this with the confidence value stored after verify_kyc().
     """
-
-    result = verify_kyc(aadhaar_suffix=aadhaar_suffix)
-
     return {
-        "meets_threshold": result["confidence"] >= threshold,
-        "confidence": result["confidence"],
-        "kyc_verified": result["kyc_verified"],
-        "route": result["route"],
+        "meets_threshold": kyc_confidence >= threshold,
+        "confidence":      kyc_confidence,
+        "kyc_verified":    kyc_confidence >= MANUAL_REVIEW_THRESHOLD,
     }

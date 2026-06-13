@@ -61,6 +61,7 @@ export default function ChatPage() {
   const [emiData, setEmiData] = useState<EmiData | null>(null);
   const [rulesChecked, setRulesChecked] = useState<RuleCheck[]>([]);
   const [tab, setTab] = useState<"process" | "why" | "audit">("process");
+  const [refId, setRefId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const userId = useRef("default");
@@ -130,11 +131,13 @@ export default function ChatPage() {
       if (data.audit?.length) setAudit(data.audit);
       if (data.emi) { setEmiData(data.emi); setTab("why"); }
       if (data.rules_checked?.length) setRulesChecked(data.rules_checked);
+      if (data.ref_id) setRefId(data.ref_id);
 
     } catch {
       setMessages(prev => [...prev, {
         id: uid + 1, from: "bot", ts: ts(),
         text: "⚠️ Couldn't reach the server. Make sure the backend is running on port 8000.",
+        isError: true,
       }]);
     } finally {
       setTyping(false);
@@ -212,7 +215,11 @@ export default function ChatPage() {
                 </div>
 
                 {m.isDownload ? (
-                  <a href="http://127.0.0.1:8000/download" target="_blank" rel="noreferrer"
+                  <a
+                    href={refId
+                      ? `http://127.0.0.1:8000/download/${refId}`
+                      : "http://127.0.0.1:8000/download"}
+                    target="_blank" rel="noreferrer"
                     className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl rounded-tl-sm shadow-md hover:scale-105 transition-all font-semibold text-sm">
                     📄 Download Sanction Letter
                   </a>

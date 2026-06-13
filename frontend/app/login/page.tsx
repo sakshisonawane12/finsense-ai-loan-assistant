@@ -4,12 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-const DEMO_USERS: Record<string, string> = {
-  sakshi: "pass123",
-  srushti: "pass123",
-  sanika: "pass123",
-  shreya: "pass123",
-};
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,24 +26,36 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     const err = validate();
-    if (err) {
-      setError(err);
-      return;
-    }
-
+    if (err) { setError(err); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800)); // simulate auth
-
-    const key = name.trim().toLowerCase();
-    if (DEMO_USERS[key] && DEMO_USERS[key] === password) {
+    try {
+      // Try login first
+      let res = await fetch("http://127.0.0.1:8000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: name.trim(), password }),
+      });
+      // User not found — auto-register
+      if (res.status === 401) {
+        res = await fetch("http://127.0.0.1:8000/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: name.trim(), password }),
+        });
+      }
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem("finsense_token", data.token);
+        localStorage.setItem("finsense_user", data.username);
+        router.push("/");
+      } else {
+        const data = await res.json();
+        setError(data.detail || "Login failed. Please try again.");
+      }
+    } catch {
+      // Backend down — fallback demo login
       localStorage.setItem("finsense_user", name.trim());
       router.push("/");
-    } else if (!DEMO_USERS[key]) {
-      // allow any new user with password >= 4 chars
-      localStorage.setItem("finsense_user", name.trim());
-      router.push("/");
-    } else {
-      setError("Incorrect password. Try: pass123");
     }
     setLoading(false);
   }
